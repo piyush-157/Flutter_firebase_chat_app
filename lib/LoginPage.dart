@@ -105,7 +105,8 @@ class _LoginPageState extends State<LoginPage> {
                        prefs.setBool("isLogin", true);
                        prefs.setString("id", id);
                        prefs.setString("Email", data[0]["Email"]);
-                       print(id);
+                       print("Email:" + data[0]["Email"]);
+                       print("id: " + id);
                        Navigator.of(context).pop();
                        //x  Navigator.of(context).pushNamed("AfterLogin");
                        Navigator.of(context).pushNamed("WelcomePage", arguments: {"id": id});

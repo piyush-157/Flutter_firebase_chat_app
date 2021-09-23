@@ -324,16 +324,14 @@ class _ChatScreenState extends State<ChatScreen> {
                               FirebaseFirestore.instance.collection("Users").doc(senderid).collection("chats").doc(receiverid).update({
                                 "lastmessage":message,
                                 "timestamp": timeStamp,
+                                "name": name,
+                                "image": image
                               });
 
                               FirebaseFirestore.instance.collection("Users").doc(receiverid).collection("chats").doc(senderid).update({
                                 "lastmessage":message,
                                 "timestamp": timeStamp,
                               });
-
-
-
-
 
 
                               _text.clear();

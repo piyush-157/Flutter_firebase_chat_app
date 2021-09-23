@@ -15,51 +15,15 @@ class _WelcomePageState extends State<WelcomePage> {
 
   String name = "";
   String email = "";
+  String loginId = "";
 
   getEmail() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       email = prefs.getString("Email");
+      loginId = prefs.getString("id");
       print(email);
-    });
-    getUsers(email);
-  }
-
-
-  List<Widget> mainData = new List<Widget>();
-  final dateTime = DateTime.now();
-
-  getUsers(email) async{
-    List<Widget> temp = new List<Widget>();
-    await FirebaseFirestore.instance.collection("Users").where("Email",isNotEqualTo: email).get().then((value) {
-      value.docs.forEach((element) {
-        temp.add(Card(
-          child: ListTile(
-            leading: CircleAvatar(
-              radius: 30.0,
-              backgroundImage:
-              NetworkImage(element["Profile"].toString()),
-              backgroundColor: Colors.transparent,
-            ),
-            title: Text(element["Name"].toString()),
-            subtitle: Text("Status"),
-            trailing: Text(
-              '${dateTime.hour} : ${dateTime.minute}',
-              style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12
-              ),
-            ),
-            onTap: () {
-              var id = element.id;
-              Navigator.of(context).pushNamed("ChatScreen", arguments: {"id":id});
-            },
-          ),
-        ));
-      });
-      setState(() {
-        mainData = temp;
-      });
+      print("Login: " + loginId);
     });
   }
 
@@ -105,47 +69,44 @@ class _WelcomePageState extends State<WelcomePage> {
         ],
         title: Text("Chats"),
       ),
-      body: (email == "")?Center(child: CircularProgressIndicator(),):ListView(
-        children: mainData,
+      body: (email!="")?StreamBuilder(
+        stream: FirebaseFirestore.instance.collection("Users").doc(loginId).collection("chats").snapshots(),
+          builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
+          if(!snapshot.hasData){
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          return ListView.builder(
+            itemCount: snapshot.data.docs.length,
+            itemBuilder: (context, position){
+              return Card(
+                child: ListTile(
+                  leading: CircleAvatar(
+                    radius: 30.0,
+                    backgroundImage:
+                    NetworkImage(snapshot.data.docs[position]["image"].toString()),
+                    backgroundColor: Colors.transparent,
+                  ),
+                  title: Text(snapshot.data.docs[position]["name"].toString()),
+                  subtitle: Text(snapshot.data.docs[position]["lastmessage"].toString()),
+                  trailing: Text(snapshot.data.docs[position]["timestamp"].toString()),
+                  onTap: () {
+                    var id = snapshot.data.docs[position].id;
+                    Navigator.of(context).pushNamed("ChatScreen", arguments: {"id":id});
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ):Center(child: CircularProgressIndicator()),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).pushNamed("AfterLogin");
+        },
+        child: Icon(Icons.chat_outlined),
       ),
-      // body: (email!="")?StreamBuilder(
-      //   stream: FirebaseFirestore.instance.collection("Users").where("Email",isNotEqualTo: email).snapshots(),
-      //     builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
-      //     if(!snapshot.hasData){
-      //       return Center(
-      //         child: CircularProgressIndicator(),
-      //       );
-      //     }
-      //     return ListView.builder(
-      //       itemCount: snapshot.data.docs.length,
-      //       itemBuilder: (context, position){
-      //         return Card(
-      //           child: ListTile(
-      //             leading: CircleAvatar(
-      //               radius: 30.0,
-      //               backgroundImage:
-      //               NetworkImage(snapshot.data.docs[position]["Profile"].toString()),
-      //               backgroundColor: Colors.transparent,
-      //             ),
-      //             title: Text(snapshot.data.docs[position]["Name"].toString()),
-      //             subtitle: Text("Status"),
-      //             trailing: Text(
-      //               '${dateTime.hour} : ${dateTime.minute}',
-      //               style: TextStyle(
-      //                 color: Colors.grey,
-      //                 fontSize: 12
-      //               ),
-      //             ),
-      //             onTap: () {
-      //               var id = snapshot.data.docs[position].id;
-      //               Navigator.of(context).pushNamed("ChatScreen", arguments: {"id":id});
-      //             },
-      //           ),
-      //         );
-      //       },
-      //     );
-      //   },
-      // ):Center(child: CircularProgressIndicator()),
     );
   }
 }
